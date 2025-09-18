@@ -1,18 +1,13 @@
-                                        
-              #######                   PhotonVision is the free, fast, and 
-           #############                easy-to-use computer vision solution 
-         #################              for the FIRST Robotics Competition. 
-       ######        ######   :::       
-      #####            ##*::::::::::    To configure PhotonVision, open:
-     #####     :::::::::::::::::::      
-     #### :::::::::::    ###            http://photonvision.local:5800
-     ####                ####           
-    ####                 ####           using a computer on the same network 
-    #### ::              ###            as this device.
-     #### :::::::       ####            
-     ####     ::::::::  ####            Documentation is available at: 
-     #####         ::::::::    :        
-      ######        ####:::::::::       https://docs.photonvision.org/
-       ##################    ::::::     
-         ##############                 
-           #########                    
+                                                  │ XBOT ROBOTICS: Inspire underserved students in STEAM & robotics.
+        @@@@@@@ @@@@@@   @@@@@@@@@@@@@@@@@@       │
+            @@@@@  @@@@@@@@@   @@@@@@   @@@@@     │
+              @@@@@  @@@@@   @@@@@@@@@@  @@@@@@   │
+               @@@@@   @@   @@@@@  @@@@@   @@@@@  │ Custom Photon Vision Image including:
+                @@@@   @@  @@@@@    @@@@@   @@@@@ │ Camera Settings, XCASTER, Docker Container setup and more.
+@@@@    @@@@     @@@@ @@@@ @@@@      @@@@    @@@@ │ 
+ @@@@   @@@@@   @@@@   @@  @@@@@                  │
+  @@@@   @@@@@ @@@@@   @@   @@@@@                 │ This Orange PI has been flashed by The Matrix Team.
+  @@@@@@  @@@@@@@@@  @@@@@   @@@@@                │
+    @@@@@@ @@@@@@@ @@@@@@@@@   @@@@@              │
+       @@@@@@@@@@@@@@@   @@@@@@@ @@@@@@@          │
+                                                  │ For more setup details & config info, refer to Team 488.

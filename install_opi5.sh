@@ -83,3 +83,127 @@ apt-get --yes --quiet clean
 
 rm -rf /usr/share/doc
 rm -rf /usr/share/locale/
+
+# One-time setup for the Orange Pi's, needs to be connected to the internet
+# make config directory
+sudo mkdir -p /xbot/config
+
+# Update and upgrade    
+sudo apt-get upgrade -y
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+# ----- XCASTER -----
+
+# Ensure the script is run as root
+if [ "$(id -u)" != "0" ]; then
+  echo "This script must be run as root" >&2
+  exit 1
+fi
+
+# Variables
+SERVICE_NAME="xcaster"
+SERVICE_DESC="XCASTER Service"
+JAR_URL="https://github.com/Kobeeeef/XCASTER/releases/download/v2.0.0/XCASTER.jar"
+INSTALL_DIR="/opt/xcaster"
+JAR_PATH="$INSTALL_DIR/XCASTER.jar"
+SYSTEMD_FILE="/lib/systemd/system/$SERVICE_NAME.service"
+
+# Create installation directory
+mkdir -p "$INSTALL_DIR"
+
+# Download the JAR file
+curl -L "$JAR_URL" -o "$JAR_PATH"
+
+# Ensure the JAR file is executable
+chmod +x "$JAR_PATH"
+
+# Create the systemd service file
+cat > "$SYSTEMD_FILE" <<EOF
+[Unit]
+Description=$SERVICE_DESC
+After=network.target
+
+[Service]
+ExecStart=java -jar $JAR_PATH photonvision pi raspberry
+Restart=always
+RestartSec=3
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=$SERVICE_NAME
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd, enable and start the service
+systemctl daemon-reload
+systemctl enable "$SERVICE_NAME.service"
+systemctl start "$SERVICE_NAME.service"
+
+echo "Service $SERVICE_NAME has been set up, started, and enabled."
+
+cat > /usr/local/bin/detect_video_devices.sh <<EOF
+#!/bin/bash
+
+# Define serial IDs for black-and-white and color cameras
+BW_SERIAL="00000000844"
+COLOR_SERIAL="00000000852"
+
+ACTION=\$1  # Capture the action (add/remove)
+
+# Use absolute paths for reliability
+V4L2_CTL="/usr/bin/v4l2-ctl"
+UDEVADM="/usr/bin/udevadm"
+
+if [ "\$ACTION" == "add" ]; then
+    for device in /dev/video*; do
+        SERIAL=\$("\$UDEVADM" info --query=property --name="\$device" | grep ID_SERIAL_SHORT | cut -d= -f2)
+        [ -z "\$SERIAL" ] && continue
+
+        if "\$V4L2_CTL" -d "\$device" --list-formats-ext 2>/dev/null | grep -q 'MJPG\|YUYV'; then
+            if [ "\$SERIAL" == "\$BW_SERIAL" ]; then
+                ln -sf "\$device" /dev/bw_camera
+            elif [ "\$SERIAL" == "\$COLOR_SERIAL" ]; then
+                ln -sf "\$device" /dev/color_camera
+            fi
+        fi
+    done
+elif [ "\$ACTION" == "remove" ]; then
+    ACTIVE_BW=false
+    ACTIVE_COLOR=false
+
+    for device in /dev/video*; do
+        SERIAL=\$("\$UDEVADM" info --query=property --name="\$device" | grep ID_SERIAL_SHORT | cut -d= -f2)
+
+        if [ "\$SERIAL" == "\$BW_SERIAL" ]; then
+            ACTIVE_BW=true
+        elif [ "\$SERIAL" == "\$COLOR_SERIAL" ]; then
+            ACTIVE_COLOR=true
+        fi
+    done
+
+    # Only remove symlinks if the corresponding camera is actually missing
+    if [ "\$ACTIVE_BW" == "false" ] && [ -L /dev/bw_camera ]; then
+        rm -f /dev/bw_camera
+    fi
+
+    if [ "\$ACTIVE_COLOR" == "false" ] && [ -L /dev/color_camera ]; then
+        rm -f /dev/color_camera
+    fi
+fi
+EOF
+
+chmod +x /usr/local/bin/detect_video_devices.sh
+
+cat > /etc/udev/rules.d/99-camera-symlinks.rules <<EOF
+ACTION=="add", SUBSYSTEM=="video4linux", RUN+="/usr/local/bin/detect_video_devices.sh add"
+ACTION=="remove", SUBSYSTEM=="video4linux", RUN+="/usr/local/bin/detect_video_devices.sh remove"
+EOF
+
+udevadm control --reload-rules

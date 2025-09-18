@@ -289,21 +289,23 @@ if ! is_version_available "$VERSION" ; then
 fi
 
 if [ "$VERSION" = "latest" ] ; then
-  RELEASE_URL="https://api.github.com/repos/photonvision/photonvision/releases/latest"
+  RELEASE_URL="https://api.github.com/repos/Kobeeeef/photon-image-modifier/releases/latest"
   debug "Downloading PhotonVision (latest)..."
 else
   RELEASE_URL="https://api.github.com/repos/photonvision/photonvision/releases/tags/v$VERSION"
   debug "Downloading PhotonVision (v$VERSION)..."
 fi
 
+JAR_URL="https://github.com/Kobeeeef/photon-image-modifier/releases/download/Devkobe/photonvision.jar"
+
 mkdir -p /opt/photonvision
 cd /opt/photonvision || die "Tried to enter /opt/photonvision, but it was not created."
-curl -sk "$RELEASE_URL" |
-    grep "browser_download_url.*$ARCH_NAME.jar" |
-    cut -d : -f 2,3 |
-    tr -d '"' |
-    wget -qi - -O photonvision.jar
-debug "Downloaded PhotonVision."
+
+echo "Downloading PhotonVision from ${JAR_URL}..."
+# Download the jar file using curl
+curl -L -o photonvision.jar "$JAR_URL"
+
+echo "Downloaded PhotonVision."
 
 debug "Creating the PhotonVision systemd service..."
 
