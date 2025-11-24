@@ -296,7 +296,7 @@ else
   debug "Downloading PhotonVision (v$VERSION)..."
 fi
 
-JAR_URL="https://github.com/Kobeeeef/photon-image-modifier/releases/download/Devkobe/photonvision.jar"
+JAR_URL="https://github.com/eljueves/photonvision/releases/download/Dev/photonvision-dev-Unknown-linuxarm64.jar"
 
 mkdir -p /opt/photonvision
 cd /opt/photonvision || die "Tried to enter /opt/photonvision, but it was not created."
